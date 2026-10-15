@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "synthetic": true,
+  "master_seed": 20261014,
+  "generator": "numpy.default_rng (PCG64); independent uniform integers 0..3",
+  "seed_derivation": "SeedSequence(master).spawn(6), each generate_state(1, uint32)",
+  "stream_order": [
+    "data",
+    "selection",
+    "random6",
+    "random20",
+    "qaoa6",
+    "qaoa20"
+  ],
+  "seeds": {
+    "data": 1765307115,
+    "selection": 1328927541,
+    "random6": 192204277,
+    "random20": 2952989005,
+    "qaoa6": 3036182775,
+    "qaoa20": 1728456039
+  },
+  "pool_rows": 1000,
+  "skills": [
+    "Programming",
+    "Design",
+    "Communication"
+  ],
+  "participants_sha256": "14ddc37ca98ef3d82e00f83348ff09574598094362add99b44c0920d637e7ffb",
+  "selection": "20 without replacement; then 6 from those 20; sampled order preserved",
+  "cases": [
+    {
+      "id": "n6",
+      "ids": [
+        "P0484",
+        "P0766",
+        "P0138",
+        "P0605",
+        "P0848",
+        "P0623"
+      ],
+      "pool_positions_zero_based": [
+        483,
+        765,
+        137,
+        604,
+        847,
+        622
+      ],
+      "random_seed": 192204277,
+      "qaoa_seed": 3036182775,
+      "positions_within_n20_zero_based": [
+        7,
+        4,
+        8,
+        5,
+        18,
+        10
+      ]
+    },
+    {
+      "id": "n20",
+      "ids": [
+        "P0757",
+        "P0754",
+        "P0027",
+        "P0476",
+        "P0766",
+        "P0605",
+        "P0151",
+        "P0484",
+        "P0138",
+        "P0292",
+        "P0623",
+        "P0132",
+        "P0147",
+        "P0325",
+        "P0347",
+        "P0264",
+        "P0971",
+        "P0740",
+        "P0848",
+        "P0177"
+      ],
+      "pool_positions_zero_based": [
+        756,
+        753,
+        26,
+        475,
+        765,
+        604,
+        150,
+        483,
+        137,
+        291,
+        622,
+        131,
+        146,
+        324,
+        346,
+        263,
+        970,
+        739,
+        847,
+        176
+      ],
+      "random_seed": 2952989005,
+      "qaoa_seed": 1728456039
+    }
+  ]
+}

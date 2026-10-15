@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="We explain team formation with synthetic skill data, QUBO, Ising, and QAOA, and inspect saved classical and quantum results.">
+  <title>Quantum Team Builder | How do we form two teams?</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="Quantum Team Builder, back to top"><span class="brand-mark" aria-hidden="true">q</span><span>Quantum Team Builder</span></a>
+    <span class="header-label">We make team formation rules inspectable</span>
+  </header>
+  <main id="main">
+    <div id="top" class="hero">
+      <p class="eyebrow">Synthetic data · Saved experiments · Qiskit</p>
+      <h1>How do we form<br>two teams?</h1>
+      <p class="hero-description">We start with skill data, combine within-team differences, skill balance, and team size in one objective, then check its encoding and actual solver results.</p>
+      <p class="quiet">We show saved experiments. Switching cases changes the display without rerunning an algorithm.</p>
+    </div>
+
+    <div id="load-status" class="load-status" role="status" aria-live="polite">We are loading the saved experiment data...</div>
+
+    <div id="experiment" hidden>
+      <div class="case-bar">
+        <div><span class="overline">Our selected case</span><div id="case-controls" class="segmented" role="group" aria-label="Select a case size"></div></div>
+        <p id="case-description" class="case-description" aria-live="polite"></p>
+      </div>
+      <dl class="scope-metrics" aria-label="Data volume, problem size, and measurement count">
+        <div><dt>Synthetic source records</dt><dd id="pool-count"></dd><span>Records in the source pool</span></div>
+        <div><dt>People in this case</dt><dd id="case-count"></dd><span id="team-size-label"></span></div>
+        <div><dt>Saved quantum measurements</dt><dd id="shot-count"></dd><span>Repeated samples of the same model</span></div>
+      </dl>
+      <nav class="section-nav" aria-label="Six sections">
+        <a href="#background">01 Background</a><a href="#objective">02 Objective</a><a href="#qubo">03 QUBO</a><a href="#ising">04 Ising</a><a href="#qaoa">05 QAOA</a><a href="#verification">06 Classical checks</a>
+      </nav>
+
+      <section id="background" class="research-section">
+        <div class="section-heading"><span class="section-number">01</span><div><p class="overline">Background and inputs</p><h2>We start with synthetic skill profiles</h2></div></div>
+        <div class="section-intro"><p>We study skill concentration and gaps that can arise from manual, random, or single-skill team formation. At a hackathon, one team might include several developers while another lacks programming skills. We explore an inspectable rule using multiple skills, while leaving participants in control.</p><p>We represent each person with several skill dimensions. We show the first rows of the source CSV alongside the full skill table for the selected case.</p><p class="notice">We use synthetic profiles, not records of real people. These inputs let us test algorithms and rules without establishing real collaboration outcomes or fairness.</p></div>
+        <div class="two-columns">
+          <div class="panel"><div class="panel-heading"><h3>Our source-data preview</h3><span class="tag">Synthetic CSV</span></div><div id="pool-table" class="table-scroll" tabindex="0" aria-label="Scrollable synthetic source-data preview"></div><p id="source-note" class="small-note"></p></div>
+          <div class="panel"><div class="panel-heading"><h3>People in our selected case</h3><span id="case-tag" class="tag"></span></div><div id="case-table" class="table-scroll" tabindex="0" aria-label="Scrollable skill table for the selected case"></div><p class="small-note">We preserve input order: row i corresponds to variable xᵢ and qubit i.</p></div>
+        </div>
+      </section>
+
+      <section id="objective" class="research-section">
+        <div class="section-heading"><span class="section-number">02</span><div><p class="overline">Objective and constraint</p><h2>We define what to optimize</h2></div></div>
+        <div class="two-columns objective-layout">
+          <div>
+            <p>We reward skill differences within each team and penalize imbalance between the teams in each skill total. We assign everyone once and require equal team sizes.</p>
+            <div class="formula" aria-label="Energy equals negative within-team difference plus skill imbalance plus the team-size penalty">E(x) = −C(x) + B(x)<br><span class="formula-indent">+ P(Σᵢxᵢ − n/2)²</span></div>
+            <dl class="definitions"><div><dt>C · Within-team difference</dt><dd>We sum the mean absolute skill difference for every pair assigned to the same team.</dd></div><div><dt>B · Skill imbalance</dt><dd>We sum the squared deviations of each team’s skill totals from half the combined total.</dd></div><div><dt>P · Team-size penalty</dt><dd id="penalty-description"></dd></div></dl>
+            <p class="small-note">We minimize E. Our within-team reward differs from the usual Max-Cut reward for separating pairs. Skill difference is only a proxy for complementarity.</p>
+          </div>
+          <div class="panel skill-panel"><div class="panel-heading"><h3>Teams our solver returned</h3><label class="method-control">Method<select id="skill-method" aria-label="Select the method for the skill-total chart"></select></label></div><div id="team-result-status"></div><div id="team-members" class="team-members"></div><figure><div id="skill-chart" class="chart-container" tabindex="0" aria-label="Team skill totals, horizontally scrollable"></div><figcaption>We show skill totals for the returned assignment. For each skill, the upper bar is Team 1 and the lower bar is Team 2. Balanced scores do not guarantee fairness.</figcaption></figure></div>
+        </div>
+      </section>
+
+      <section id="qubo" class="research-section">
+        <div class="section-heading"><span class="section-number">03</span><div><p class="overline">Quadratic Unconstrained Binary Optimization</p><h2>We expand the objective into a QUBO</h2></div></div>
+        <p class="section-intro">We use xᵢ ∈ {0,1} to assign a team and include the size penalty in the objective. We count each cross term once and retain the constant separately.</p>
+        <div class="two-columns qubo-layout"><div class="panel"><div class="panel-heading"><h3>Our saved coefficient matrix</h3><span class="tag">Upper-triangle convention</span></div><figure><div id="qubo-chart" class="chart-container" tabindex="0" aria-label="QUBO coefficient chart, horizontally scrollable"></div><figcaption id="qubo-caption"></figcaption></figure></div><div><div class="formula compact">E(x) = c₀ + Σᵢhᵢxᵢ<br>+ Σᵢ&lt;ⱼ Jᵢⱼxᵢxⱼ</div><dl class="number-facts"><div><dt>Constant c₀</dt><dd id="qubo-constant"></dd></div><div><dt>Binary variables</dt><dd id="qubo-variables"></dd></div></dl><p>We place linear coefficients hᵢ on the diagonal and Jᵢⱼ above it. We leave the lower triangle blank so that no interaction is counted twice.</p><div class="heat-legend" aria-label="Coefficient color scale"><span>Negative</span><span class="heat-gradient"></span><span>Positive</span></div><p class="small-note">We scale colors by the largest absolute coefficient in this case. Hover over a cell for its value, or inspect the complete coefficient table below.</p><details><summary>We inspect all QUBO coefficients</summary><div id="coefficient-table" class="table-scroll coefficient-scroll" tabindex="0" aria-label="Scrollable table of all QUBO coefficients"></div></details></div></div>
+      </section>
+
+      <section id="ising" class="research-section">
+        <div class="section-heading"><span class="section-number">04</span><div><p class="overline">Quantum cost Hamiltonian</p><h2>We map the binary model to Ising</h2></div></div>
+        <div class="two-columns"><div><div class="formula">xᵢ = (I − Zᵢ) / 2</div><p>We express the QUBO as a combination of Pauli operators. We show the actual terms saved in the data file.</p><dl class="number-facts"><div><dt>Constant offset</dt><dd id="ising-offset"></dd></div><div><dt>Saved Pauli terms</dt><dd id="ising-term-count"></dd></div></dl><p class="notice">We add the offset back when comparing full energies. It leaves the best partition unchanged but affects the reported energy value.</p><p class="small-note">We decode little-endian bit order: the rightmost displayed bit is qubit 0, and the basis-state index is Σᵢxᵢ2ⁱ.</p></div><div class="panel"><div class="panel-heading"><h3>Our saved operator terms</h3><span class="tag">Pauli · coefficient</span></div><div id="ising-terms" class="table-scroll pauli-scroll" tabindex="0" aria-label="Scrollable Pauli operator terms"></div></div></div>
+      </section>
+
+      <section id="qaoa" class="research-section">
+        <div class="section-heading"><span class="section-number">05</span><div><p class="overline">Quantum Approximate Optimization Algorithm</p><h2>We inspect recorded measurements</h2></div></div>
+        <p class="section-intro">We alternate QAOA cost and mixing layers and tune their parameters with a classical optimizer. We use an ideal statevector simulator with finite-shot sampling, not quantum hardware. We show saved statuses and counts; empirical frequencies estimate probabilities rather than giving exact probabilities.</p>
+        <div id="qaoa-status" class="run-notice"></div>
+        <dl id="qaoa-facts" class="stat-grid"></dl>
+        <div class="panel"><div class="panel-heading"><h3>We inspect the 10 most frequent outcomes</h3><span id="histogram-count" class="tag"></span></div><figure><div id="count-chart" class="chart-container" tabindex="0" aria-label="Measurement-count chart, horizontally scrollable"></div><figcaption id="count-caption"></figcaption></figure></div>
+        <div class="two-columns qaoa-foot"><p id="sampling-note" class="small-note"></p><details><summary>We inspect saved parameters and stopping reasons</summary><dl id="qaoa-details" class="details-list"></dl></details></div>
+      </section>
+
+      <section id="verification" class="research-section">
+        <div class="section-heading"><span class="section-number">06</span><div><p class="overline">Classical comparison and verification</p><h2>We compare against classical references</h2></div></div>
+        <p class="section-intro">We inspect the objective, team-size feasibility, absolute energy gap to the exact reference, and measured runtime. We retain infeasible returns, but their energy cannot be treated as a better valid partition.</p>
+        <div class="panel comparison-panel"><div id="comparison-table" class="table-scroll" tabindex="0" aria-label="Horizontally scrollable method-comparison table"></div></div>
+        <p class="small-note">We report the absolute energy gap ΔE = E(returned) − E* for feasible returns, not a relative percentage. A missing exact reference or infeasible return has no applicable gap. Different budgets measure different work; local timings do not establish quantum advantage.</p>
+        <div id="verification-card" class="verification-card"></div>
+        <div class="closing-note"><h3>We keep our conclusions bounded</h3><p>We verify the mathematical rules and computation for these synthetic cases. Real team formation also needs preferences, availability, accessibility, and project requirements. Equal team size and balanced skill totals cannot replace participants’ judgment.</p></div>
+      </section>
+    </div>
+  </main>
+  <footer><span>Quantum Team Builder</span><span>We keep objectives, evidence, and limitations visible.</span></footer>
+</body>
+</html>
